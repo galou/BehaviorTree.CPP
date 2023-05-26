@@ -17,9 +17,9 @@ namespace BT
 {
 constexpr const char* RetryNode::NUM_ATTEMPTS;
 
-RetryNode::RetryNode(const std::string& name, int NTries) :
+RetryNode::RetryNode(const std::string& name, int n_tries) :
   DecoratorNode(name, {}),
-  max_attempts_(NTries),
+  max_attempts_(n_tries),
   try_count_(0),
   read_parameter_from_ports_(false)
 {
@@ -53,7 +53,7 @@ NodeStatus RetryNode::tick()
 
   if(status() == NodeStatus::IDLE)
   {
-    all_skipped_ = true;
+    child_skipped_ = true;
   }
   setStatus(NodeStatus::RUNNING);
 
@@ -63,7 +63,7 @@ NodeStatus RetryNode::tick()
     NodeStatus child_status = child_node_->executeTick();
 
     // switch to RUNNING state as soon as you find an active child
-    all_skipped_ &= (child_status == NodeStatus::SKIPPED);
+    child_skipped_ &= (child_status == NodeStatus::SKIPPED);
 
     switch (child_status)
     {
@@ -75,13 +75,13 @@ NodeStatus RetryNode::tick()
 
       case NodeStatus::FAILURE: {
         try_count_++;
-        do_loop = try_count_ < max_attempts_ || max_attempts_ == -1;
+        do_loop = (try_count_ < max_attempts_) || (max_attempts_ == -1);
 
         resetChild();
 
         // Return the execution flow if the child is async,
         // to make this interruptable.
-        if (requiresWakeUp() && prev_status == NodeStatus::IDLE && do_loop)
+        if (requiresWakeUp() && (prev_status == NodeStatus::IDLE) && do_loop)
         {
           emitWakeUpSignal();
           return NodeStatus::RUNNING;
@@ -107,7 +107,7 @@ NodeStatus RetryNode::tick()
   }
 
   try_count_ = 0;
-  return all_skipped_ ? NodeStatus::SKIPPED : NodeStatus::FAILURE;
+  return child_skipped_ ? NodeStatus::SKIPPED : NodeStatus::FAILURE;
 }
 
 }   // namespace BT
