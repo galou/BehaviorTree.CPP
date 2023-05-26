@@ -356,12 +356,12 @@ public:
     // clang-format off
     static_assert(!(param_constructable && !has_static_ports_list),
                   "[registerNode]: you MUST implement the static method:\n"
-                  "  PortsList providedPorts();\n");
+                  "  PortsList providedPorts()\n");
 
     static_assert(!(has_static_ports_list && !param_constructable),
                   "[registerNode]: since you have a static method providedPorts(),\n"
                   "you MUST add a constructor with signature:\n"
-                  "(const std::string&, const NodeParameters&)\n");
+                  "(const std::string&, const NodeConfig&, ...)\n");
     // clang-format on
     registerNodeType<T>(ID, getProvidedPorts<T>(), args...);
   }
