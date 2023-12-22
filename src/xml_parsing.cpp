@@ -14,6 +14,7 @@
 #include <functional>
 #include <iostream>
 #include <list>
+#include <map>
 #include <sstream>
 #include <string>
 #include <typeindex>
@@ -27,7 +28,6 @@
 #pragma warning(disable : 4996)   // do not complain about sprintf
 #endif
 
-#include <map>
 #include "behaviortree_cpp/xml_parsing.h"
 #include "tinyxml2/tinyxml2.h"
 #include <filesystem>
@@ -1006,6 +1006,10 @@ void addNodeModelToXML(const TreeNodeManifest& model,
     {
       port_element->SetAttribute("default", port_info.defaultValueString().c_str());
     }
+    if (port_info.hasDynamicDefaultValue())
+    {
+      port_element->SetAttribute("default", "");
+    }
 
     if (!port_info.description().empty())
     {
@@ -1029,7 +1033,7 @@ void addTreeToXML(const Tree& tree,
                   XMLElement* rootXML,
                   bool add_metadata,
                   bool add_builtin_models)
-{  
+{
   std::function<void(const TreeNode&, XMLElement*)> addNode;
   addNode = [&](const TreeNode& node,
                 XMLElement* parent_elem)
@@ -1401,6 +1405,10 @@ std::string writeTreeXSD(const BehaviorTreeFactory& factory)
       if (not port_info.defaultValue().empty())
       {
         attr->SetAttribute("default", port_info.defaultValueString().c_str());
+      }
+      else if (port_info.hasDynamicDefaultValue())
+      {
+        attr->SetAttribute("use", "optional");
       }
       else
       {
